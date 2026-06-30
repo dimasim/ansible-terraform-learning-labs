@@ -40,7 +40,7 @@ resource "google_compute_instance" "web1" {
 
   boot_disk {
     initialize_params {
-      image = "ubuntu-2004-focal-v20220204"
+      image = "ubuntu-os-cloud/ubuntu-2204-lts"
     }
   }
 
@@ -63,7 +63,7 @@ resource "google_compute_instance" "web2" {
 
   boot_disk {
     initialize_params {
-      image = "ubuntu-2004-focal-v20220204"
+      image = "ubuntu-os-cloud/ubuntu-2204-lts"
     }
   }
 
