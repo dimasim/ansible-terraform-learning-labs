@@ -52,7 +52,7 @@ resource "google_compute_instance" "web1" {
   }
 
   metadata = {
-    ssh-keys = "${var.ssh_user}:${file(var.ssh_pub_key_path)}"
+    ssh-keys = "${var.ssh_user}:${file(pathexpand(var.ssh_pub_key_path))}"
   }
 }
 
@@ -75,7 +75,7 @@ resource "google_compute_instance" "web2" {
   }
 
   metadata = {
-    ssh-keys = "${var.ssh_user}:${file(var.ssh_pub_key_path)}"
+    ssh-keys = "${var.ssh_user}:${file(pathexpand(var.ssh_pub_key_path))}"
   }
 }
 
