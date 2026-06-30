@@ -18,45 +18,52 @@ Untuk memudahkan pengelolaan kredensial dan IP target di seluruh sample dan exer
 
 ---
 
-## Code Samples
+## Cara Menjalankan Code Samples (Ansible)
+
+Semua playbooks di bawah dijalankan dengan merujuk ke **Dynamic Inventory** [**`exercise1/inventory.py`**](file:///home/dimas/ansible-terraform-learning-labs/exercise1/inventory.py) agar IP target otomatis terbaca dari file `.env`.
 
 ### Code Sample 1: Ad hoc commands
 Uji konektivitas Ansible ke mesin target menggunakan modul ad-hoc `ping`.
 ```bash
-ansible all -m ping
+ansible all -i exercise1/inventory.py -m ping
 ```
 
 ### Code Sample 2: Playbooks
-Menerapkan Playbook sederhana untuk menginstal dan menjalankan `apache2` pada host `web1` (lihat folder [sample2](sample2)).
+Menginstal dan menjalankan `apache2` pada host `web1` (lihat folder [sample2](sample2)).
 ```bash
-ansible-playbook playbook.yml
+cd sample2
+ansible-playbook -i ../exercise1/inventory.py playbook.yml
 ```
 
 ### Code Sample 3: Handlers
 Menggunakan *handler* untuk merestart `apache2` hanya ketika file konfigurasi berubah (lihat folder [sample3](sample3)).
 ```bash
+cd sample3
 touch foo.conf
-ansible-playbook playbook.yml
+ansible-playbook -i ../exercise1/inventory.py playbook.yml
 ```
 
 ### Code Sample 4: Variables
 Mempelajari penggunaan variabel dinamis di Ansible Playbook (lihat folder [sample4](sample4)).
 ```bash
-ansible-playbook playbook.yml
+cd sample4
+ansible-playbook -i ../exercise1/inventory.py playbook.yml
 ```
 
 ### Code Sample 5: Deployment dengan Ansible
-Mendeploy aplikasi Hazelcast server di `web1` dan Calculator service di `web2` yang saling terhubung (lihat folder [sample5](sample5)).
+Mendeploy aplikasi Java Hazelcast server di `web1` dan Calculator service di `web2` yang saling terhubung (lihat folder [sample5](sample5)).
 ```bash
+cd sample5
 ./gradlew build
-ansible-playbook playbook.yml
+ansible-playbook -i ../exercise1/inventory.py playbook.yml
 ```
 
 ### Code Sample 6: Ansible Docker playbook
 Menginstal Docker CE di remote server dan menjalankan container Hazelcast menggunakan modul Docker Ansible (lihat folder [sample6](sample6)).
 ```bash
-ansible-playbook install-docker-playbook.yml
-ansible-playbook hazelcast-playbook.yml
+cd sample6
+ansible-playbook -i ../exercise1/inventory.py install-docker-playbook.yml
+ansible-playbook -i ../exercise1/inventory.py hazelcast-playbook.yml
 ```
 
 ### Code Sample 7: Terraform AWS EC2
@@ -79,7 +86,8 @@ Panduan lengkap untuk setup VM lokal/cloud, konfigurasi akses SSH Key-Based, ins
 ### Exercise 2: Deploy Flask Hello World Web Service
 Mendeploy web service berbasis Flask Python sebagai system service di host `web1` (lihat folder [exercise2](exercise2)).
 ```bash
-ansible-playbook playbook.yml
+cd exercise2
+ansible-playbook -i ../exercise1/inventory.py playbook.yml
 ```
 
 ### Exercise 3: Provisioning 2 VM GCP dengan Terraform (Integrasi Ansible)
@@ -98,4 +106,13 @@ Membuat **2 VM Instance (`web1` dan `web2`)** secara otomatis di GCP beserta kon
    terraform init
    terraform apply
    ```
-4. Masukkan IP output (`web1_public_ip` & `web2_public_ip`) ke file `exercise1/inventory.ini` atau `.env`.
+4. Masukkan IP output (`web1_public_ip` & `web2_public_ip`) ke file `.env` di root folder project.
+   ```bash
+   # Di root project .env
+   WEB1_IP="<web1_public_ip>"
+   WEB2_IP="<web2_public_ip>"
+   ```
+5. Uji koneksi:
+   ```bash
+   ansible all -i exercise1/inventory.py -m ping
+   ```
