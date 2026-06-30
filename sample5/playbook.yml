@@ -7,7 +7,7 @@
     apt: 
       name: default-jre
       state: present
-      update_cache: yes
+      update_cache: no
   - name: create Hazelcast directory
     file:
       path: /var/hazelcast
@@ -41,7 +41,7 @@
     apt:
       name: default-jre
       state: present
-      update_cache: yes
+      update_cache: no
   - name: create directory for Calculator
     file:
       path: /var/calculator
