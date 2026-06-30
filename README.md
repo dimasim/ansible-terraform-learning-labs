@@ -1,165 +1,101 @@
-# Chapter 7: Configuration Management with Ansible
+# Ansible & Terraform Learning Labs
 
-All the instructions assumes that you have:
-* Ansible tool installed
-* Two Ubuntu machines with SSH configured (you should be able to `ssh` into each machine without password)
-* Ansible inventory file created (`/etc/ansible/hosts`) pointing to your remote machines
+Repositori ini berisi kumpulan materi praktikum dan latihan untuk mempelajari **Ansible** (Configuration Management) dan **Terraform** (Infrastructure as Code).
 
-Sample Ansible inventory file:
+## Persiapan Global (Environment Variables)
 
-	[webservers]
-	web1 ansible_host=<machine-ip-1> ansible_user=<machine-user-1>
-	web2 ansible_host=<machine-ip-2> ansible_user=<machine-user-2>
+Untuk memudahkan pengelolaan kredensial dan IP target di seluruh sample dan exercise, Anda dapat menggunakan file [**`.env`**](file:///home/dimas/ansible-terraform-learning-labs/.env) di root project.
+
+1. Salin template `.env.example` menjadi `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+2. Buka dan edit file `.env` untuk memasukkan kredensial AWS, GCP Project ID, serta IP target server Anda.
+3. Muat environment variables tersebut ke session terminal Anda sebelum menjalankan Terraform atau Ansible:
+   ```bash
+   export $(cat .env | xargs)
+   ```
+
+---
 
 ## Code Samples
 
 ### Code Sample 1: Ad hoc commands
-
-To check that your inventory is correct, run the Ansible ad hoc `ping` command.
-
-	$ ansible all -m ping
-	web1 | SUCCESS => {
-	    "ansible_facts": {
-	        "discovered_interpreter_python": "/usr/bin/python3"
-	    },
-	    "changed": false,
-	    "ping": "pong"
-	}
-	web2 | SUCCESS => {
-	    "ansible_facts": {
-	        "discovered_interpreter_python": "/usr/bin/python3"
-	    },
-	    "changed": false,
-	    "ping": "pong"
-	}
+Uji konektivitas Ansible ke mesin target menggunakan modul ad-hoc `ping`.
+```bash
+ansible all -m ping
+```
 
 ### Code Sample 2: Playbooks
-
-The [sample2](sample2) includes a Playbook to install and run `apache2` on the `web1` host.
-
-You can execute it using the following command.
-
-	$ ansible-playbook playbook.yml
+Menerapkan Playbook sederhana untuk menginstal dan menjalankan `apache2` pada host `web1` (lihat folder [sample2](sample2)).
+```bash
+ansible-playbook playbook.yml
+```
 
 ### Code Sample 3: Handlers
-
-The [sample3](sample3) includes a Playbook which, apart from installing and running `apache2`, copies the local `apache2` configuration and restarts the server only if the configuration has changed.
-
-To create the configuration and start the playbook, run the following commands.
-
-	$ touch foo.conf
-	$ ansible-playbook playbook.yml
-
-Note that if you run `ansible-playbook` mutliple times, nothing changes. Now, if you create a new configuration and start the Playbook again, you should see that the `apache2` server is restarted.
-
-	$ echo "something" > foo.conf
-	$ ansible-playbook playbook.yml
+Menggunakan *handler* untuk merestart `apache2` hanya ketika file konfigurasi berubah (lihat folder [sample3](sample3)).
+```bash
+touch foo.conf
+ansible-playbook playbook.yml
+```
 
 ### Code Sample 4: Variables
+Mempelajari penggunaan variabel dinamis di Ansible Playbook (lihat folder [sample4](sample4)).
+```bash
+ansible-playbook playbook.yml
+```
 
-The [sample4](sample4) includes a Playbook presenting the use of variables.
-
-Execute the following command to see the result.
-
-	$ ansible-playbook playbook.yml
-
-### Code Sample 5: Deployment with Ansible
-
-The [sample5](sample5) includes a Playbook to start Hazelcast server on `web1` and the Calculator service (which uses Hazelcast) on `web2`.
-
-To run the playbook, you need first to modify `src/main/java/com/leszko/calculator/CalculatorApplication.java` and change `<machine-ip-1>` to your `web1` machine IP address. Then, you can build the project and apply the Ansible Playbook.
-
-	$ ./gradlew build
-	$ ansible-playbook playbook.yml
-
-In result, you deployed two dependent applications. You can test it by running the following command.
-
-	$ curl http://<machine-ip-2>:8080/sum?a=1\&b=2
-	3
+### Code Sample 5: Deployment dengan Ansible
+Mendeploy aplikasi Hazelcast server di `web1` dan Calculator service di `web2` yang saling terhubung (lihat folder [sample5](sample5)).
+```bash
+./gradlew build
+ansible-playbook playbook.yml
+```
 
 ### Code Sample 6: Ansible Docker playbook
+Menginstal Docker CE di remote server dan menjalankan container Hazelcast menggunakan modul Docker Ansible (lihat folder [sample6](sample6)).
+```bash
+ansible-playbook install-docker-playbook.yml
+ansible-playbook hazelcast-playbook.yml
+```
 
-The [sample6](sample6) includes two playbooks:
- * `install-docker-playbook.yml`: playbook which installs Docker Community Edition on an Ubuntu 20.04 server
- * `hazelcast-playbook.yml`: playbook which starts Hazelcast Docker container on a server which has Docker Daemon running
+### Code Sample 7: Terraform AWS EC2
+Provisioning EC2 instance `t2.micro` di AWS (lihat folder [sample7](sample7)).
+```bash
+cd sample7
+terraform init
+terraform plan
+terraform apply
+```
 
- To install Docker Daemon on a server, run the following command.
+---
 
-	$ ansible-playbook install-docker-playbook.yml
+## Latihan (Exercise)
 
-If the command fails at some point, re-run it.
+### Exercise 1: Menyiapkan Infrastruktur Server & Ansible Inventory
+Panduan lengkap untuk setup VM lokal/cloud, konfigurasi akses SSH Key-Based, instalasi Python, dan pengaturan inventory Ansible.
+* **Panduan lengkap ada di**: [**`exercise1/README.md`**](file:///home/dimas/ansible-terraform-learning-labs/exercise1/README.md)
 
-Then, to start Hazelcast container, run the following command.
+### Exercise 2: Deploy Flask Hello World Web Service
+Mendeploy web service berbasis Flask Python sebagai system service di host `web1` (lihat folder [exercise2](exercise2)).
+```bash
+ansible-playbook playbook.yml
+```
 
-	$ ansible-playbook hazelcast-playbook.yml
-
-### Code Sample 7: Using Terraform configuration
-
-The [sample7](sample7) includes a Terraform configuration to provision an AWS EC2 Instance.
-
-To configure AWS credentials, execute the following command.
-
-	$ aws configure
-
-Execute the following command to download all required Terraform providers.
-
-	$ terraform init
-
-Then, check the planned infrastructure changes.
-
-	$ terraform plan
-
-Finally, make the infrastructure changes with the following command.
-
-	$ terraform apply
-
-You can clean up the created resources with the following command.
-
-	$ terraform destroy
-
-## Exercise solutions
-
-### Exercise 1: Create the server infrastructure and use Ansible to manage it
-
-You can use VirtualBox, one of Cloud providers (AWS, GCP, or Azure), or a bare-metal server. Configure your SSH public key into `authorized_keys`. Then, install Python on each of the servers. Finally, put the servers IPs and user names into your inventory file (`/etc/ansible/hosts`).
-
-With such configuration you should be able to `ping` all the servers.
-
-	$ ansible all -m ping
-
-### Exercise 2: Deploy a Python-based "hello world" web service using Ansible
-
-The [exercise2](exercise2) directory contains the source code for the hello world application and the Ansible playbook to deploy it.
-
-To install Hello World service on the `web1` server, run the following command.
-
-	$ ansible-playbook playbook.yml
-
-After that you should be able to call the Hello World service.
-
-	$ curl http://<web1-ip>:5000/hello
-	Hello World!
-
-### Exercise 3: Provision GCP VM Instance with Terraform
-
-The [exercise3](exercise3) includes a Terraform configuration to provision a GCP VM Instance.
-
-To configure GCP credentials execute the following command.
-
-	$ gcloud init
-
-Create GCP Credentials as described [here](https://console.cloud.google.com/iam-admin/serviceaccounts) and export them into an env variable called `GOOGLE_APPLICATION_CREDENTIALS`.
-
-	$ export GOOGLE_APPLICATION_CREDENTIALS=<path-to-your-credentials>
-
-Fill `<your-gcp-project>` in the `main.tf` file. Then, execute `terraform plan` to check the expected changes, and finally apply the Terraform configuration.
-
-	$ terraform apply
-
-Verify that the VM Instance is created with the following command.
-
-	$ gcloud compute instances list
-
-Clean up the infrastructure.
-
-	$ terraform destroy
+### Exercise 3: Provisioning 2 VM GCP dengan Terraform (Integrasi Ansible)
+Membuat **2 VM Instance (`web1` dan `web2`)** secara otomatis di GCP beserta konfigurasi firewall dan injeksi SSH Key agar siap dikonfigurasi dengan Ansible (lihat folder [exercise3](exercise3)).
+1. Pastikan Anda sudah login menggunakan Google Cloud CLI:
+   ```bash
+   gcloud auth application-default login
+   ```
+2. Buat file `terraform.tfvars` di dalam folder `exercise3` lalu definisikan Project ID GCP Anda:
+   ```hcl
+   gcp_project = "id-project-gcp-anda"
+   ```
+3. Jalankan Terraform:
+   ```bash
+   cd exercise3
+   terraform init
+   terraform apply
+   ```
+4. Masukkan IP output (`web1_public_ip` & `web2_public_ip`) ke file `exercise1/inventory.ini` atau `.env`.
