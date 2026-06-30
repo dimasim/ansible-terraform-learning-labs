@@ -52,6 +52,7 @@ ansible-playbook -i ../exercise1/inventory.py playbook.yml
 
 ### Code Sample 5: Deployment dengan Ansible
 Mendeploy aplikasi Java Hazelcast server di `web1` dan Calculator service di `web2` yang saling terhubung (lihat folder [sample5](sample5)).
+*Pastikan Java JDK terpasang lokal untuk melakukan build project sebelum menjalankan playbook.*
 ```bash
 cd sample5
 ./gradlew build
@@ -116,3 +117,37 @@ Membuat **2 VM Instance (`web1` dan `web2`)** secara otomatis di GCP beserta kon
    ```bash
    ansible all -i exercise1/inventory.py -m ping
    ```
+
+---
+
+## Verifikasi Keberhasilan Praktikum (Uji Coba API)
+
+Gunakan perintah-perintah berikut untuk memverifikasi apakah layanan Anda berhasil berjalan di VM GCP:
+
+### Uji Coba Sample 2 & 3 (Apache Web Server)
+Panggil port HTTP (80) pada IP `web1`:
+```bash
+curl http://<IP_WEB1>
+```
+* **Hasil:** Kode HTML halaman default "Apache2 Ubuntu Default Page".
+
+### Uji Coba Sample 5 (Hazelcast & Calculator App)
+Panggil endpoint penjumlahan pada Calculator service di port 8080 pada IP `web2`:
+```bash
+curl "http://<IP_WEB2>:8080/sum?a=10&b=20"
+```
+* **Hasil:** Menampilkan nilai **`30`**.
+
+### Uji Coba Sample 6 (Docker Hazelcast)
+SSH ke VM `web1` untuk memeriksa container yang aktif:
+```bash
+ssh ubuntu@<IP_WEB1> "sudo docker ps"
+```
+* **Hasil:** Menampilkan container `hazelcast/hazelcast` berstatus *Up*.
+
+### Uji Coba Exercise 2 (Flask Hello World)
+Panggil endpoint Flask app di port 5000 pada IP `web1`:
+```bash
+curl http://<IP_WEB1>:5000/hello
+```
+* **Hasil:** Menampilkan tulisan **`Hello World!`**.
