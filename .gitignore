@@ -1,0 +1,12 @@
+# Environment variables file containing credentials
+.env
+
+# Terraform local state and files
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+crash.log
+
+# Ansible retry files
+*.retry
