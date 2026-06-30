@@ -1,153 +1,175 @@
 # Ansible & Terraform Learning Labs
 
-Repositori ini berisi kumpulan materi praktikum dan latihan untuk mempelajari **Ansible** (Configuration Management) dan **Terraform** (Infrastructure as Code).
-
-## Persiapan Global (Environment Variables)
-
-Untuk memudahkan pengelolaan kredensial dan IP target di seluruh sample dan exercise, Anda dapat menggunakan file [**`.env`**](file:///home/dimas/ansible-terraform-learning-labs/.env) di root project.
-
-1. Salin template `.env.example` menjadi `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-2. Buka dan edit file `.env` untuk memasukkan kredensial AWS, GCP Project ID, serta IP target server Anda.
-3. Muat environment variables tersebut ke session terminal Anda sebelum menjalankan Terraform atau Ansible:
-   ```bash
-   export $(cat .env | xargs)
-   ```
+Repositori ini berisi kumpulan materi praktikum dan latihan untuk mempelajari **Ansible** (Configuration Management) dan **Terraform** (Infrastructure as Code) menggunakan VM GCP.
 
 ---
 
-## Cara Menjalankan Code Samples (Ansible)
+## 🛠️ Persiapan Awal (Prerequisites)
 
-Semua playbooks di bawah dijalankan dengan merujuk ke **Dynamic Inventory** [**`exercise1/inventory.py`**](file:///home/dimas/ansible-terraform-learning-labs/exercise1/inventory.py) agar IP target otomatis terbaca dari file `.env`.
-
-### Code Sample 1: Ad hoc commands
-Uji konektivitas Ansible ke mesin target menggunakan modul ad-hoc `ping`.
+### 1. Kloning & Pengaturan Environment Variables
+Di root project, salin template `.env.example` ke `.env` untuk menyimpan konfigurasi IP target dan kredensial secara global:
 ```bash
-ansible all -i exercise1/inventory.py -m ping
+cp .env.example .env
+```
+Edit file `.env` dan isi variabel yang dibutuhkan. Kemudian muat variabel tersebut ke terminal session:
+```bash
+export $(cat .env | xargs)
 ```
 
-### Code Sample 2: Playbooks
-Menginstal dan menjalankan `apache2` pada host `web1` (lihat folder [sample2](sample2)).
+### 2. Instalasi Tools Lokal
+Pastikan tools berikut sudah terinstal di komputer lokal Anda:
+
+#### **Terraform**
 ```bash
-cd sample2
-ansible-playbook -i ../exercise1/inventory.py playbook.yml
+# Tambahkan repositori HashiCorp & instal
+sudo apt update && sudo apt install -y gnupg software-properties-common
+wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install -y terraform
 ```
 
-### Code Sample 3: Handlers
-Menggunakan *handler* untuk merestart `apache2` hanya ketika file konfigurasi berubah (lihat folder [sample3](sample3)).
+#### **Google Cloud CLI (gcloud)**
 ```bash
-cd sample3
-touch foo.conf
-ansible-playbook -i ../exercise1/inventory.py playbook.yml
+# Tambahkan repositori Google Cloud & instal
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+sudo apt update && sudo apt install -y google-cloud-cli
+```
+*Inisialisasi akun GCP Anda:*
+```bash
+gcloud init
+gcloud auth application-default login
 ```
 
-### Code Sample 4: Variables
-Mempelajari penggunaan variabel dinamis di Ansible Playbook (lihat folder [sample4](sample4)).
+#### **Java 17 JDK (PENTING)**
+*Proyek ini menggunakan Gradle 7.3.1 yang **hanya mendukung maksimal Java 17**. Jangan menggunakan default-jdk (Java 21) karena akan menyebabkan build error.*
 ```bash
-cd sample4
-ansible-playbook -i ../exercise1/inventory.py playbook.yml
+sudo apt update && sudo apt install -y openjdk-17-jdk
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ```
 
-### Code Sample 5: Deployment dengan Ansible
-Mendeploy aplikasi Java Hazelcast server di `web1` dan Calculator service di `web2` yang saling terhubung (lihat folder [sample5](sample5)).
-*Pastikan Java JDK terpasang lokal untuk melakukan build project sebelum menjalankan playbook.*
+#### **Ansible**
 ```bash
-cd sample5
-./gradlew build
-ansible-playbook -i ../exercise1/inventory.py playbook.yml
-```
-
-### Code Sample 6: Ansible Docker playbook
-Menginstal Docker CE di remote server dan menjalankan container Hazelcast menggunakan modul Docker Ansible (lihat folder [sample6](sample6)).
-```bash
-cd sample6
-ansible-playbook -i ../exercise1/inventory.py install-docker-playbook.yml
-ansible-playbook -i ../exercise1/inventory.py hazelcast-playbook.yml
-```
-
-### Code Sample 7: Terraform AWS EC2
-Provisioning EC2 instance `t2.micro` di AWS (lihat folder [sample7](sample7)).
-```bash
-cd sample7
-terraform init
-terraform plan
-terraform apply
+sudo add-apt-repository --yes --update ppa:ansible/ansible
+sudo apt install -y ansible
 ```
 
 ---
 
-## Latihan (Exercise)
+## 🚀 Panduan Eksekusi & Uji Coba (Sample & Exercise)
 
-### Exercise 1: Menyiapkan Infrastruktur Server & Ansible Inventory
-Panduan lengkap untuk setup VM lokal/cloud, konfigurasi akses SSH Key-Based, instalasi Python, dan pengaturan inventory Ansible.
-* **Panduan lengkap ada di**: [**`exercise1/README.md`**](file:///home/dimas/ansible-terraform-learning-labs/exercise1/README.md)
-
-### Exercise 2: Deploy Flask Hello World Web Service
-Mendeploy web service berbasis Flask Python sebagai system service di host `web1` (lihat folder [exercise2](exercise2)).
-```bash
-cd exercise2
-ansible-playbook -i ../exercise1/inventory.py playbook.yml
-```
-
-### Exercise 3: Provisioning 2 VM GCP dengan Terraform (Integrasi Ansible)
-Membuat **2 VM Instance (`web1` dan `web2`)** secara otomatis di GCP beserta konfigurasi firewall dan injeksi SSH Key agar siap dikonfigurasi dengan Ansible (lihat folder [exercise3](exercise3)).
-1. Pastikan Anda sudah login menggunakan Google Cloud CLI:
-   ```bash
-   gcloud auth application-default login
-   ```
-2. Buat file `terraform.tfvars` di dalam folder `exercise3` lalu definisikan Project ID GCP Anda:
-   ```hcl
-   gcp_project = "id-project-gcp-anda"
-   ```
-3. Jalankan Terraform:
-   ```bash
-   cd exercise3
-   terraform init
-   terraform apply
-   ```
-4. Masukkan IP output (`web1_public_ip` & `web2_public_ip`) ke file `.env` di root folder project.
-   ```bash
-   # Di root project .env
-   WEB1_IP="<web1_public_ip>"
-   WEB2_IP="<web2_public_ip>"
-   ```
-5. Uji koneksi:
-   ```bash
-   ansible all -i exercise1/inventory.py -m ping
-   ```
+Semua playbook dijalankan merujuk ke **Dynamic Inventory** [**`exercise1/inventory.py`**](file:///home/dimas/ansible-terraform-learning-labs/exercise1/inventory.py) agar IP target otomatis dibaca dari file `.env`.
 
 ---
 
-## Verifikasi Keberhasilan Praktikum (Uji Coba API)
+### **Exercise 3: Provisioning 2 VM GCP (Langkah Pertama)**
+Membuat **2 VM Instance (`web1` dan `web2`)** secara otomatis di GCP beserta konfigurasi firewall dan injeksi SSH Key.
+* **Cara Menjalankan:**
+  ```bash
+  cd exercise3
+  # Buat file terraform.tfvars dan masukkan: gcp_project = "project-id-anda"
+  terraform init
+  terraform apply
+  ```
+* **Cara Cek Keberhasilan:**
+  Setelah sukses, IP publik kedua VM akan muncul sebagai output (`web1_public_ip` dan `web2_public_ip`). Masukkan IP tersebut ke dalam `.env` di root folder.
 
-Gunakan perintah-perintah berikut untuk memverifikasi apakah layanan Anda berhasil berjalan di VM GCP:
+---
 
-### Uji Coba Sample 2 & 3 (Apache Web Server)
-Panggil port HTTP (80) pada IP `web1`:
-```bash
-curl http://<IP_WEB1>
-```
-* **Hasil:** Kode HTML halaman default "Apache2 Ubuntu Default Page".
+### **Exercise 1: Uji Koneksi Awal (Ping)**
+Memverifikasi koneksi Ansible ke kedua VM GCP target.
+* **Cara Menjalankan:**
+  ```bash
+  ansible all -i exercise1/inventory.py -m ping
+  ```
+* **Cara Cek Keberhasilan:**
+  Output terminal berwarna hijau dengan pesan `"ping": "pong"` untuk masing-masing `web1` dan `web2`.
 
-### Uji Coba Sample 5 (Hazelcast & Calculator App)
-Panggil endpoint penjumlahan pada Calculator service di port 8080 pada IP `web2`:
-```bash
-curl "http://<IP_WEB2>:8080/sum?a=10&b=20"
-```
-* **Hasil:** Menampilkan nilai **`30`**.
+---
 
-### Uji Coba Sample 6 (Docker Hazelcast)
-SSH ke VM `web1` untuk memeriksa container yang aktif:
-```bash
-ssh ubuntu@<IP_WEB1> "sudo docker ps"
-```
-* **Hasil:** Menampilkan container `hazelcast/hazelcast` berstatus *Up*.
+### **Code Sample 2: Playbooks (Apache di `web1`)**
+Menginstal dan mengaktifkan Apache Web Server di VM `web1`.
+* **Cara Menjalankan:**
+  ```bash
+  cd sample2
+  ansible-playbook -i ../exercise1/inventory.py playbook.yml
+  ```
+* **Cara Cek Keberhasilan:**
+  ```bash
+  curl http://$WEB1_IP
+  ```
+  *(Menampilkan kode HTML dari halaman default Apache)*
 
-### Uji Coba Exercise 2 (Flask Hello World)
-Panggil endpoint Flask app di port 5000 pada IP `web1`:
-```bash
-curl http://<IP_WEB1>:5000/hello
-```
-* **Hasil:** Menampilkan tulisan **`Hello World!`**.
+---
+
+### **Code Sample 3: Handlers (Apache dengan trigger Restart)**
+Menginstal Apache dan merestart server hanya jika file konfigurasi mengalami perubahan.
+* **Cara Menjalankan:**
+  ```bash
+  cd sample3
+  touch foo.conf
+  ansible-playbook -i ../exercise1/inventory.py playbook.yml
+  ```
+* **Cara Cek Keberhasilan:**
+  Buka/akses `curl http://$WEB1_IP` dan cek syslog di server target untuk melihat log restart jika `foo.conf` diubah lalu dijalankan ulang.
+
+---
+
+### **Code Sample 4: Variables**
+Mempelajari penggunaan variabel dinamis di Ansible.
+* **Cara Menjalankan:**
+  ```bash
+  cd sample4
+  ansible-playbook -i ../exercise1/inventory.py playbook.yml
+  ```
+* **Cara Cek Keberhasilan:**
+  Periksa output terminal untuk memastikan variabel dideklarasikan dan dicetak dengan benar oleh task Ansible.
+
+---
+
+### **Code Sample 5: Deployment Hazelcast & Calculator (2 VM)**
+Mendeploy Hazelcast Server di `web1` dan Calculator Service di `web2`.
+* **Cara Menjalankan:**
+  ```bash
+  cd sample5
+  # Build proyek Java (Memerlukan Java 17)
+  ./gradlew build
+  # Jalankan playbook
+  ansible-playbook -i ../exercise1/inventory.py playbook.yml
+  ```
+* **Cara Cek Keberhasilan:**
+  ```bash
+  curl "http://$WEB2_IP:8080/sum?a=10&b=20"
+  ```
+  *(Output yang diharapkan mengembalikan hasil: **`30`**)*
+
+---
+
+### **Code Sample 6: Ansible Docker Playbook (Hazelcast Container)**
+Menginstal Docker CE di server target dan menjalankan container Hazelcast.
+* **Cara Menjalankan:**
+  ```bash
+  cd sample6
+  ansible-playbook -i ../exercise1/inventory.py install-docker-playbook.yml
+  ansible-playbook -i ../exercise1/inventory.py hazelcast-playbook.yml
+  ```
+* **Cara Cek Keberhasilan:**
+  ```bash
+  ssh ubuntu@$WEB1_IP "sudo docker ps"
+  ```
+  *(Output menampilkan container `hazelcast/hazelcast` berstatus Running)*
+
+---
+
+### **Exercise 2: Deploy Flask Hello World Service**
+Mendeploy aplikasi Flask Python sebagai System Service di VM `web1`.
+* **Cara Menjalankan:**
+  ```bash
+  cd exercise2
+  ansible-playbook -i ../exercise1/inventory.py playbook.yml
+  ```
+* **Cara Cek Keberhasilan:**
+  ```bash
+  curl http://$WEB1_IP:5000/hello
+  ```
+  *(Output yang diharapkan mengembalikan string: **`Hello World!`**)*
