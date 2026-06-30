@@ -10,3 +10,7 @@ crash.log
 
 # Ansible retry files
 *.retry
+
+# Gradle build directories
+.gradle/
+build/
