@@ -173,3 +173,25 @@ Mendeploy aplikasi Flask Python sebagai System Service di VM `web1`.
   curl http://$WEB1_IP:5000/hello
   ```
   *(Output yang diharapkan mengembalikan string: **`Hello World!`**)*
+
+---
+
+### **Code Sample 7: AWS Terraform Lab (LocalStack Sandbox)**
+Mempelajari cara provisioning resources AWS EC2 secara lokal gratis menggunakan simulator LocalStack (tanpa perlu mendaftar/mengaktifkan akun AWS asli).
+* **Prerequisites Tambahan (Menjalankan LocalStack):**
+  Pastikan LocalStack sudah terpasang dan berjalan sebagai Docker container di komputer lokal Anda:
+  ```bash
+  docker run -d --name localstack -p 4566:4566 -p 4571:4571 localstack/localstack
+  ```
+* **Cara Menjalankan:**
+  ```bash
+  cd sample7/aws-teraform-lab
+  terraform init
+  terraform apply
+  ```
+* **Cara Cek Keberhasilan:**
+  ```bash
+  aws --endpoint-url=http://localhost:4566 ec2 describe-instances --query "Reservations[*].Instances[*].[InstanceId,State.Name,Tags]"
+  ```
+  *(Menampilkan rincian EC2 Instance tiruan `Praktikum-Instance` yang berhasil dibuat secara lokal)*
+
